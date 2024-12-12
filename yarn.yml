@@ -1,0 +1,23 @@
+---
+- name: Generate YARN log and check for errors
+  hosts: all
+  become: yes
+  tasks:
+    - name: Generate YARN log
+      shell: yarn logs -applicationId <YOUR_APP_ID> > /tmp/yarn_log.txt
+      register: yarn_log_output
+
+    - name: Check for particular error message in the log
+      shell: grep 'ERROR_MESSAGE_PATTERN' /tmp/yarn_log.txt
+      register: error_found
+      failed_when: error_found.rc == 1
+      ignore_errors: yes
+
+    - name: Perform resolution steps if error found
+      when: error_found.rc == 0
+      block:
+        - name: Resolution Step 1
+          command: echo "Performing resolution step 1"
+
+        - name: Resolution Step 2
+          command: echo "Performing resolution step 2"
