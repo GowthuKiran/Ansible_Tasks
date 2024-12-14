@@ -1,0 +1,34 @@
+---
+- name: Query Splunk and store results in a dictionary
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Perform a Splunk search query
+      uri:
+        url: "https://splunk.example.com:8089/services/search/jobs/export"
+        method: POST
+        headers:
+          Authorization: "Splunk {{ splunk_token }}"
+        body: |
+          search=search index=your_index_name sourcetype=your_sourcetype_name | stats count by field_name
+          output_mode=json
+        body_format: raw
+        validate_certs: no
+        register: splunk_response
+
+    - name: Parse Splunk response and store in a dictionary
+      set_fact:
+        splunk_data: "{{ splunk_response.json }}"
+
+    - name: Show the parsed Splunk data
+      debug:
+        var: splunk_data
+
+    # Optional: Add logic to manipulate or extract specific data from the response
+    - name: Extract specific values from Splunk data into a dictionary
+      set_fact:
+        my_dict: "{{ splunk_data.results | map(attribute='field_name') | list }}"
+      
+    - name: Display the dictionary with specific values
+      debug:
+        var: my_dict
