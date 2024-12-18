@@ -1,0 +1,45 @@
+---
+- name: Restart Autosys job after rollback
+  hosts: eappbcon
+  become: true
+  become_user: aasconap
+  tasks:
+
+    - name: Check the logs directory for the latest error log file
+      shell: |
+        cd /apps/dat/aasconap/prod/admin/log/autosys
+        ls -alrt {{ job_name }}*.error | tail -n 1
+      register: latest_error_log
+      changed_when: false
+
+    - name: Read the latest error log for the recovery file
+      shell: |
+        grep ".rec" {{ latest_error_log.stdout }}
+      register: recovery_file
+      changed_when: false
+      failed_when: recovery_file.stdout == ""
+
+    - name: Rollback the recovery file
+      shell: |
+        m_rollback -d {{ recovery_file.stdout }}
+      when: recovery_file.stdout != ""
+      register: rollback_result
+
+    - name: Restart the Autosys job
+      shell: |
+        autorep -j {{ job_name }} | grep "status"
+        # Assuming you have a restart command for the job, such as `autostart` or any equivalent.
+        autostart {{ job_name }}
+      when: rollback_result.rc == 0
+      register: restart_result
+
+    - name: Ensure the job restarted successfully
+      debug:
+        msg: "Job {{ job_name }} restarted successfully."
+      when: restart_result.rc == 0
+
+    - name: Handle rollback failure (Optional)
+      debug:
+        msg: "Rollback failed for recovery file {{ recovery_file.stdout }}. Job restart not attempted."
+      when: rollback_result.rc != 0
+
