@@ -1,0 +1,38 @@
+---
+- name: Log File Creation and Removal of .rec Files
+  hosts: your_linux_server
+  become: true  # If you need root privileges to write to specific directories
+  tasks:
+
+    - name: Create a log file in the specific path
+      file:
+        path: "/path/to/your/logfile.log"
+        state: touch
+        mode: '0644'
+
+    - name: Add the file name with extension '.rec' to the log file
+      lineinfile:
+        path: "/path/to/your/logfile.log"
+        line: "yourfile.rec"
+        create: yes
+
+    - name: Search for .rec files in the log file
+      shell: grep -o '\S*\.rec' /path/to/your/logfile.log
+      register: rec_files_found
+      ignore_errors: yes  # Continue if no .rec files are found
+
+    - name: Remove the .rec file if found
+      file:
+        path: "/path/to/your/.rec"
+        state: absent
+      when: rec_files_found.stdout != ""
+
+    - name: Display status of file removal
+      debug:
+        msg: "The .rec file was removed successfully"
+      when: rec_files_found.stdout != ""
+
+    - name: Display message if no .rec file was found
+      debug:
+        msg: "No .rec file found to remove"
+      when: rec_files_found.stdout == ""
