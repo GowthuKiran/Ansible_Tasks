@@ -1,0 +1,16 @@
+---
+- name: Extract xyz.rec from log file
+  hosts: localhost
+  tasks:
+    - name: Read the log file contents
+      slurp:
+        src: /path/to/abc.log
+      register: log_content
+
+    - name: Decode and extract xyz.rec
+      set_fact:
+        extracted_lines: "{{ log_content.content | b64decode | regex_findall('xyz.rec') }}"
+
+    - name: Show extracted result
+      debug:
+        var: extracted_lines
