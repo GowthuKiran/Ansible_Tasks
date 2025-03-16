@@ -1,0 +1,6 @@
+errors:
+  - "Error: Unable to connect to host"
+  - "Warning: Disk space low"
+  - "Error: File not found"
+  - "Critical: Service failed to start"
+  - "Error: Permission denied"
