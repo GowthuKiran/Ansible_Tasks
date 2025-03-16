@@ -1,0 +1,29 @@
+---
+- name: Playbook to Check Errors for Specific Patterns
+  hosts: localhost
+  vars_files:
+    - vars/errors.yml
+
+  tasks:
+    - name: Check for specific patterns in error list
+      set_fact:
+        matched_errors: "{{ errors | select('search', 'Error') | list }}"  # Find errors containing 'Error'
+
+    - name: Display error message if 'Error' pattern is found
+      debug:
+        msg: "There are errors related to system issues!"
+      when: matched_errors | length > 0
+
+    - name: Display error message if 'Critical' pattern is found
+      debug:
+        msg: "Critical error detected! Immediate action required!"
+      when: errors | select('search', 'Critical') | list | length > 0
+
+    - name: Display error message if 'Warning' pattern is found
+      debug:
+        msg: "Warning: Please check system health."
+      when: errors | select('search', 'Warning') | list | length > 0
+
+    - name: Show all matched errors
+      debug:
+        var: matched_errors
