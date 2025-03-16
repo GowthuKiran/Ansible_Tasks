@@ -1,0 +1,29 @@
+---
+- name: Manage errors and display messages based on patterns
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Create a list of errors
+      set_fact:
+        errors:
+          - "File not found"
+          - "Permission denied"
+          - "Connection failed"
+          - "Disk space low"
+          - "Error: Timeout occurred"
+    
+    - name: Check for a specific error pattern (e.g., 'Error')
+      set_fact:
+        pattern: 'Error'
+        matched_errors: "{{ errors | select('match', pattern) | list }}"
+    
+    - name: Display matched errors if pattern found
+      debug:
+        msg: "Matched error: {{ item }}"
+      loop: "{{ matched_errors }}"
+      when: matched_errors | length > 0
+
+    - name: Display message if no matched error found
+      debug:
+        msg: "No errors matched the pattern '{{ pattern }}'."
+      when: matched_errors | length == 0
