@@ -1,0 +1,26 @@
+---
+- name: Check error log for listed errors
+  hosts: localhost
+  vars:
+    # This is the list of errors you want to search for
+    error_list:
+      - "error 1"
+      - "error 2"
+      - "error 3"
+    log_file_path: "/path/to/error_log.txt"  # Path to your error log file
+
+  tasks:
+    - name: Read the log file
+      slurp:
+        src: "{{ log_file_path }}"
+      register: log_file_content
+
+    - name: Decode the log file content
+      set_fact:
+        log_content: "{{ log_file_content.content | b64decode }}"
+
+    - name: Search for each error in the log content
+      debug:
+        msg: "Found '{{ item }}' in the log file"
+      loop: "{{ error_list }}"
+      when: item in log_content
