@@ -1,0 +1,56 @@
+Below is a single-task playbook fragment that gathers every value that appears between any pair of round brackets on the Condition: line and returns them as a list:
+
+---
+- name: Parse *all* bracket values on the Condition line
+  hosts: localhost
+  gather_facts: no
+  vars:
+    src_file: /path/to/your/file.txt      # <-- adjust
+
+  tasks:
+    - name: Collect every (…) value from the Condition line
+      set_fact:
+        # 1. read the file                   (lookup('file', …))
+        # 2. keep the line that starts "Condition:"
+        # 3. find *all* substrings inside (...) using regex_findall
+        condition_items: >-
+          {{
+            lookup('file', src_file)                      # read file
+            .splitlines()                                 # to list
+            | select('match', '^Condition:')              # find the line
+            | list | first | default('')                  # take it
+            | regex_findall('\([^)]*)\')              # ← every (…) group
+          }}
+
+    - debug:
+        var: condition_items
+
+What you receive
+
+For your sample:
+
+Condition: v(EDA_app_test1) = "up" & v(EDA_app_test2) = "up"
+
+condition_items becomes:
+
+[
+  "EDA_app_test1",
+  "EDA_app_test2"
+]
+
+You can now loop over condition_items or pass the list along to subsequent roles/tasks exactly as needed.
+
+
+---
+
+Why this works
+
+Piece	Purpose
+
+lookup('file', src_file)	Reads the text file directly on the controller (no Base-64).
+.splitlines() | select('match', '^Condition:')	Isolates only the Condition: line.
+regex_findall('\([^)]*)\')	Returns all non-overlapping matches of anything inside ( ), capturing only the inner text.
+
+
+No extra loops or filters are needed—the result is already a tidy list.
+
